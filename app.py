@@ -4,18 +4,16 @@ import cv2
 from tensorflow.keras.models import load_model
 from streamlit_drawable_canvas import st_canvas
 
-# Load trained model
+st.title("✍️ Handwritten Digit Digitizer")
+st.write("Draw a digit (0-9) in the box below")
+
+# Load model
 model = load_model("digit_model.h5")
 
-st.set_page_config(page_title="Handwritten Digit Digitizer")
-
-st.title("✍️ Handwritten Digit Digitizer")
-st.write("Draw a digit (0–9) in the box below")
-
 # Canvas
-canvas_result = st_canvas(
+canvas = st_canvas(
     fill_color="black",
-    stroke_width=10,
+    stroke_width=20,
     stroke_color="white",
     background_color="black",
     width=280,
@@ -25,27 +23,28 @@ canvas_result = st_canvas(
 )
 
 if st.button("Predict"):
-    if canvas_result.image_data is not None:
-        img = canvas_result.image_data
+    if canvas.image_data is not None:
+        img = canvas.image_data
 
         # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Resize to 28x28
-        resized = cv2.resize(gray, (28, 28))
+        img = cv2.resize(img, (28, 28))
 
-        # Invert colors (MNIST style)
-        inverted = cv2.bitwise_not(resized)
+        # Invert colors (MNIST style: white digit on black bg)
+        img = cv2.bitwise_not(img)
 
         # Normalize
-        normalized = inverted / 255.0
+        img = img / 255.0
 
         # Reshape for model
-        reshaped = normalized.reshape(1, 28, 28, 1)
+        img = img.reshape(1, 28, 28, 1)
 
         # Predict
-        prediction = model.predict(reshaped)
+        prediction = model.predict(img)
         digit = np.argmax(prediction)
 
         st.success(f"Predicted Digit: {digit}")
+
 
